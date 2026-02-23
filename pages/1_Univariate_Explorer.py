@@ -27,6 +27,7 @@ from utils.plotting import (
     plot_time_series, plot_correlogram_comparison,
     plot_distribution, plot_summary_statistics
 )
+from utils.data_manager import create_save_widget
 
 # Load configuration
 config_path = Path(__file__).parent.parent / "config" / "app_config.yaml"
@@ -276,6 +277,74 @@ try:
     fig_ts = plot_time_series(series, title="Univariate Time Series", shock_info=None)
     st.plotly_chart(fig_ts, width='stretch')
 
+    # Equation/Formula view for presentations
+    st.subheader("📊 Presentation View (with Formula)")
+
+    # Build formula string
+    formula_parts = []
+    if enable_trend:
+        if trend_type == 'linear':
+            formula_parts.append(f"{trend_intercept:.2f} + {trend_slope:.4f}t")
+        elif trend_type == 'quadratic':
+            formula_parts.append(f"{trend_intercept:.2f} + {trend_slope:.4f}t + {trend_quad:.6f}t²")
+        elif trend_type == 'exponential':
+            formula_parts.append(f"{trend_intercept:.2f} exp({trend_slope:.4f}t)")
+
+    if enable_seasonality:
+        if seasonal_type == 'additive':
+            formula_parts.append(f"{seasonal_amplitude:.2f}·sin(2πt/{seasonal_period})")
+        else:
+            formula_parts.append(f"[1 + {seasonal_amplitude:.2f}·sin(2πt/{seasonal_period})]")
+
+    if enable_arma:
+        arma_str = f"ARMA({ar_order},{ma_order})"
+        formula_parts.append(arma_str)
+
+    if len(formula_parts) == 0:
+        formula_str = "y(t) = ε(t)"
+    elif seasonal_type == 'multiplicative' and enable_seasonality:
+        # For multiplicative seasonality
+        non_seasonal = [p for i, p in enumerate(formula_parts) if not ('sin' in p and '·' in p)]
+        seasonal_part = [p for p in formula_parts if 'sin' in p and '·' in p]
+        if non_seasonal and seasonal_part:
+            formula_str = f"y(t) = ({' + '.join(non_seasonal)}) × {seasonal_part[0]}"
+        else:
+            formula_str = f"y(t) = {' + '.join(formula_parts)}"
+    else:
+        formula_str = f"y(t) = {' + '.join(formula_parts)}"
+
+    if enable_shock and shock_time:
+        formula_str += f" + Shock({shock_magnitude:.1f}σ at t={shock_time})"
+
+    # Create presentation figure
+    fig_presentation = go.Figure()
+
+    fig_presentation.add_trace(go.Scatter(
+        x=series.index,
+        y=series.values,
+        mode='lines',
+        name='Series',
+        line=dict(color='#1f77b4', width=2)
+    ))
+
+    fig_presentation.update_layout(
+        title={
+            'text': f"<b>{formula_str}</b>",
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 16}
+        },
+        xaxis_title="Time",
+        yaxis_title="Value",
+        template='plotly_white',
+        height=500,
+        showlegend=False,
+        font=dict(size=12)
+    )
+
+    st.plotly_chart(fig_presentation, width='stretch')
+    st.caption("💡 Right-click chart → 'Save image as...' to export for presentations")
+
     # Component decomposition
     if enable_trend or enable_seasonality:
         st.subheader("Component Breakdown")
@@ -316,6 +385,37 @@ try:
         st.write(f"**Skewness**: {series.skew():.4f}")
         st.write(f"**Kurtosis**: {series.kurtosis():.4f}")
         st.write(f"**Range**: [{series.min():.3f}, {series.max():.3f}]")
+
+    # Save dataset section
+    st.markdown("---")
+    components_list = []
+    if enable_trend:
+        components_list.append(f"Trend_{trend_type}")
+    if enable_seasonality:
+        components_list.append(f"Seasonal_{seasonal_type}_P{seasonal_period}")
+    if enable_arma:
+        components_list.append(f"ARMA_{ar_order}_{ma_order}")
+
+    metadata = {
+        'components': ', '.join(components_list) if components_list else 'None',
+        'trend_type': trend_type if enable_trend else None,
+        'seasonal_period': seasonal_period if enable_seasonality else None,
+        'ar_order': ar_order if enable_arma else 0,
+        'ma_order': ma_order if enable_arma else 0,
+        'n_samples': n_samples
+    }
+    if enable_shock and shock_time:
+        metadata['shock_time'] = shock_time
+        metadata['shock_magnitude'] = shock_magnitude
+
+    # Convert series to DataFrame for consistency
+    series_df = series.to_frame(name='Univariate_series')
+    create_save_widget(
+        data=series_df,
+        dataset_type='univariate',
+        default_name="Univariate_" + "_".join(components_list[:2]) if components_list else "Univariate",
+        metadata=metadata
+    )
 
 except Exception as e:
     st.error(f"Error generating series: {str(e)}")
