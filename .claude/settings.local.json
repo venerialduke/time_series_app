@@ -5,7 +5,8 @@
       "Bash(python test_arma.py:*)",
       "Bash(python:*)",
       "WebSearch",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(tree:*)"
     ]
   }
 }
