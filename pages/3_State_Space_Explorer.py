@@ -244,7 +244,10 @@ try:
             f"σ²_η = {level_var:.2f}, σ²_ζ = {trend_var:.2f}, σ²_ω = {seasonal_var:.2f}, σ²_ε = {obs_var:.2f}"
         ]
 
-    formula_str = " | ".join(equations[:2])
+    # Display equations
+    st.markdown(f"**{model_type}:**")
+    equation_text = '\n'.join(equations)
+    st.code(equation_text, language=None)
 
     # Create presentation figure
     fig_presentation = go.Figure()
@@ -258,12 +261,6 @@ try:
     ))
 
     fig_presentation.update_layout(
-        title={
-            'text': f"<b>{model_type}: {formula_str}</b>",
-            'x': 0.5,
-            'xanchor': 'center',
-            'font': {'size': 14}
-        },
         xaxis_title="Time",
         yaxis_title="Value",
         template='plotly_white',
@@ -274,10 +271,6 @@ try:
 
     st.plotly_chart(fig_presentation, width='stretch')
     st.caption("💡 Right-click chart → 'Save image as...' to export for presentations")
-
-    with st.expander("Full State Space Equations"):
-        for eq in equations:
-            st.code(eq, language=None)
 
     # Plot components
     st.subheader("Unobserved Components")

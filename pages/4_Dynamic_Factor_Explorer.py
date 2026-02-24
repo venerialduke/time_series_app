@@ -268,7 +268,10 @@ try:
     if info['shock_info']:
         equations.append(f"Shock: {shock_magnitude:.1f}σ to Factor {shock_factor+1} at t={shock_time}")
 
-    formula_str = " | ".join(equations[:2])
+    # Display equations
+    st.markdown(f"**Dynamic Factor Model ({n_factors} factors, {n_series} series):**")
+    equation_text = '\n'.join(equations)
+    st.code(equation_text, language=None)
 
     # Create presentation figure - show first 3 series
     fig_presentation = make_subplots(
@@ -292,12 +295,6 @@ try:
         )
 
     fig_presentation.update_layout(
-        title={
-            'text': f"<b>DFM: {formula_str}</b>",
-            'x': 0.5,
-            'xanchor': 'center',
-            'font': {'size': 14}
-        },
         height=150 * min(3, n_series),
         showlegend=False,
         template='plotly_white',
@@ -306,10 +303,6 @@ try:
 
     st.plotly_chart(fig_presentation, width='stretch')
     st.caption("💡 Right-click chart → 'Save image as...' to export for presentations")
-
-    with st.expander("Full DFM Equations"):
-        for eq in equations:
-            st.code(eq, language=None)
 
     # Loading matrix display
     st.subheader("Loading Matrix")

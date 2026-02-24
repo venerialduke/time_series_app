@@ -4,7 +4,8 @@
       "Bash(python -m py_compile:*)",
       "Bash(python test_arma.py:*)",
       "Bash(python:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(grep:*)"
     ]
   }
 }

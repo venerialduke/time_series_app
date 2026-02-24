@@ -258,10 +258,12 @@ try:
         eq_str = f"{var}(t) = {' '.join(eq_terms)}" if eq_terms else f"{var}(t) = ε(t)"
         equations.append(eq_str)
 
-    formula_str = " | ".join(equations)
-
+    # Display equations
+    st.markdown(f"**VAR({var_order}) System:**")
+    equation_text = '\n'.join(equations)
     if shock_info:
-        formula_str += f" | Shock: {shock_magnitude:.1f}σ to {var_names[shock_var]} at t={shock_time}"
+        equation_text += f"\n\nShock: {shock_magnitude:.1f}σ to {var_names[shock_var]} at t={shock_time}"
+    st.code(equation_text, language=None)
 
     # Create presentation figure
     fig_presentation = make_subplots(
@@ -285,12 +287,6 @@ try:
         )
 
     fig_presentation.update_layout(
-        title={
-            'text': f"<b>VAR({var_order}): {' | '.join(equations[:2])}</b>",  # Show first 2 equations
-            'x': 0.5,
-            'xanchor': 'center',
-            'font': {'size': 14}
-        },
         height=200 * n_vars,
         showlegend=False,
         template='plotly_white',
@@ -299,10 +295,6 @@ try:
 
     st.plotly_chart(fig_presentation, width='stretch')
     st.caption("💡 Right-click chart → 'Save image as...' to export for presentations")
-
-    with st.expander("Full VAR System Equations"):
-        for eq in equations:
-            st.code(eq, language=None)
 
     # Cross-correlation
     st.subheader("Cross-Correlation Matrix")

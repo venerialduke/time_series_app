@@ -12,6 +12,7 @@ Explore complex univariate time series by combining:
 import streamlit as st
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import yaml
 from pathlib import Path
 import sys
@@ -298,6 +299,12 @@ try:
 
     if enable_arma:
         arma_str = f"ARMA({ar_order},{ma_order})"
+        if ar_order > 0:
+            ar_terms = ', '.join([f'φ{i+1}={ar_params[i]:.2f}' for i in range(ar_order)])
+            arma_str += f" [{ar_terms}]"
+        if ma_order > 0:
+            ma_terms = ', '.join([f'θ{i+1}={ma_params[i]:.2f}' for i in range(ma_order)])
+            arma_str += f" [{ma_terms}]"
         formula_parts.append(arma_str)
 
     if len(formula_parts) == 0:
@@ -314,7 +321,11 @@ try:
         formula_str = f"y(t) = {' + '.join(formula_parts)}"
 
     if enable_shock and shock_time:
-        formula_str += f" + Shock({shock_magnitude:.1f}σ at t={shock_time})"
+        formula_str += f"\nShock: {shock_magnitude:.1f}σ at t={shock_time}"
+
+    # Display equation
+    st.markdown("**Model Equation:**")
+    st.code(formula_str, language=None)
 
     # Create presentation figure
     fig_presentation = go.Figure()
@@ -328,12 +339,6 @@ try:
     ))
 
     fig_presentation.update_layout(
-        title={
-            'text': f"<b>{formula_str}</b>",
-            'x': 0.5,
-            'xanchor': 'center',
-            'font': {'size': 16}
-        },
         xaxis_title="Time",
         yaxis_title="Value",
         template='plotly_white',
